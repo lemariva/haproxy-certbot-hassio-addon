@@ -1,4 +1,6 @@
-FROM alpine:3.20
+FROM balenalib/raspberrypi5-alpine:3.20
+
+RUN [ "cross-build-start" ]
 
 ARG HAPROXY_MAJOR=3.0
 ARG HAPROXY_VERSION=3.0.7
@@ -85,6 +87,8 @@ RUN mkdir -p /var/log/supervisor
 
 COPY resources/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 
 
+COPY haproxy/config/haproxy.cfg /config/haproxy.cfg
+
 RUN mkdir -p /usr/local/etc/haproxy/certs.d \
     && mkdir -p /usr/local/etc/letsencrypt
 
@@ -108,3 +112,6 @@ EXPOSE 443 80
 VOLUME [/config/ /etc/letsencrypt/ /usr/local/etc/haproxy/certs.d/]
 
 CMD ["/start.sh"]
+
+RUN [ "cross-build-end" ]
+

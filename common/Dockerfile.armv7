@@ -84,8 +84,9 @@ RUN apk add --no-cache --update supervisor libnl3-cli net-tools iproute2 certbot
     && rm -rf /var/cache/apk/*
 
 RUN mkdir -p /var/log/supervisor
-
 COPY resources/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 
+
+COPY haproxy/config/haproxy.cfg /config/haproxy.cfg
 
 RUN mkdir -p /usr/local/etc/haproxy/certs.d \
     && mkdir -p /usr/local/etc/letsencrypt

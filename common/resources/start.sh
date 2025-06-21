@@ -16,6 +16,11 @@
 
 set -e
 
+bashio::log.info "Preparing to start..."
+bashio::config.require 'data_path'
+
+DATA_PATH=$(bashio::config 'data_path')
+
 HA_PROXY_DIR=/usr/local/etc/haproxy
 TEMP_DIR=/tmp
 
@@ -27,6 +32,12 @@ CERT=${TEMP_DIR}/haproxy_cert.pem
 CSR=${TEMP_DIR}/haproxy.csr
 DEFAULT_PEM=${HA_PROXY_DIR}/default.pem
 CONFIG=/config/haproxy.cfg
+
+HTTP_PORT=$(bashio::config 'http_port')
+HTTPS_PORT=$(bashio::config 'https_port')
+FORCE_HTTPS_REDIRECT=$(bashio::config 'force_redirect')
+SERVICE_IP=$(bashio::config 'ha_ip_address')
+SERVICE_PORT=$(bashio::config 'ha_port')
 
 # Check if config file for haproxy exists
 if [ ! -e ${CONFIG} ]; then
@@ -65,4 +76,5 @@ nl-qdisc-add --dev=lo --parent=1:4 --id=40: --update plug --release-indefinite
 tc filter add dev lo protocol ip parent 1:0 prio 1 handle 1 fw classid 1:4
 
 # Run Supervisor
+bashio::log.info "Starting HAProxy..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

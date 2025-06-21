@@ -14,4 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# Renew certificates using Certbot
 /usr/bin/certbot -c /usr/local/etc/letsencrypt/cli.ini renew "$@"
