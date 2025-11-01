@@ -29,13 +29,11 @@ steps:
    - --build-arg         
    - BUILD_DATE=`$(date -u +"%Y-%m-%dT%H:%M:%SZ")`      
    - --build-arg   
-   - PROJECT_ID=${PROJECT_ID}        
+   - PROJECT_ID=${PROJECT_ID}     
+   - --build-arg   
+   - ARCHITECTURE=${_ARCHITECTURE}
    - --build-arg
-   - MAJOR_REVISION=${_MAJOR_REVISION}
-   - --build-arg
-   - MINOR_REVISION=${_MINOR_REVISION}
-   - --build-arg
-   - PATCH_REVISION=${_PATCH_REVISION}   
+   - SEMVER_REVISION=${_SEMVER_REVISION}
    - --build-arg
    - HAPROXY_MAJOR=${_HAPROXY_MAJOR}
    - --build-arg
@@ -45,9 +43,8 @@ steps:
    - .
    - --push
 substitutions:  # default values
-  _MAJOR_REVISION: "1"
-  _MINOR_REVISION: "1"
-  _PATCH_REVISION: "3-SNAPSHOT"
+  _SEMVER_REVISION: "1.1.0"
+  _ARCHITECTURE: "aarch64"
   _HAPROXY_MAJOR: "3.2"
   _HAPROXY_VERSION: "3.2.7"
 timeout: 5400s

@@ -1,118 +1,138 @@
-FROM alpine:3.22
+#========= Stage 1: Build HAProxy =========
+# This stage downloads build dependencies and compiles HAProxy
+ARG ARCHITECTURE=aarch64
+FROM ghcr.io/home-assistant/${ARCHITECTURE}-base:3.22 AS dependencies_and_build
 
 ARG HAPROXY_MAJOR=3.2
 ARG HAPROXY_VERSION=3.2.7
+
+# Install all build-time dependencies in a single layer
+RUN set -eux; \
+    apk add --no-cache --virtual .build-deps \
+        gcc \
+        libc-dev \
+        linux-headers \
+        lua5.4-dev \
+        make \
+        openssl-dev \
+        pcre2-dev \
+        readline-dev \
+        tar \
+        wget
+
+# Download, compile, and install HAProxy
+RUN set -eux; \
+    \
+    wget -O haproxy.tar.gz "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz"; \
+    mkdir -p /usr/src/haproxy; \
+    tar -xzf haproxy.tar.gz -C /usr/src/haproxy --strip-components=1; \
+    rm haproxy.tar.gz; \
+    \
+    makeOpts=' \
+        TARGET=linux-musl \
+        USE_GETADDRINFO=1 \
+        USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
+        USE_OPENSSL=1 \
+        USE_PCRE2=1 USE_PCRE2_JIT=1 \
+        USE_PROMEX=1 \
+        EXTRA_OBJS="" \
+    '; \
+    \
+    nproc="$(getconf _NPROCESSORS_ONLN)"; \
+    eval "make -C /usr/src/haproxy -j '$nproc' all $makeOpts"; \
+    eval "make -C /usr/src/haproxy install-bin $makeOpts"; \
+    \
+    # Create a directory for error files in the build stage
+    mkdir -p /usr/local/etc/haproxy/errors; \
+    cp -R /usr/src/haproxy/examples/errorfiles /usr/local/etc/haproxy/errors; \
+    rm -rf /usr/src/haproxy; \
+    \
+# Smoke test the build
+    haproxy -v
+
+
+#========= Stage 2: Final Release Image =========
+# This stage builds the final, lean image for the add-on
+ARG ARCHITECTURE=aarch64
+FROM ghcr.io/home-assistant/${ARCHITECTURE}-base:3.22 AS release
+
+# Add build-time ARGs and LABELs for metadata
 ARG VCS_REF=`git rev-parse --short HEAD`
-ARG MAJOR_REVISION=1
-ARG MINOR_REVISION=1
-ARG PATCH_REVISION=0
+ARG SEMVER_REVISION=1.1.0
 ARG BUILD_DATE=`$(date -u +"%Y-%m-%dT%H:%M:%SZ")`
 
-
-#metadata labels
-LABEL org.label-schema.build-date="${BUILD_DATE}" \
+LABEL org.label-schema.build-date=${BUILD_DATE} \
       org.label-schema.vcs-url="https://github.com/lemariva/hassio-haproxy-certbot.git" \
-	  org.label-schema.name="HAProxy Certbot" \
+      org.label-schema.name="HAProxy Certbot" \
       org.label-schema.description="haproxy proxy with letsencrypt certbot for https" \
-      org.label-schema.vcs-ref="${VCS_REF}" \
-      org.label-schema.version="${MAJOR_REVISION}.${MINOR_REVISION}.${PATCH_REVISION}" \
+      org.label-schema.vcs-ref=${VCS_REF} \
+      org.label-schema.version=${SEMVER_REVISION} \
       org.label-schema.vendor="LeMaRiva|Tech"
 
+# Create the non-root user for HAProxy
 RUN set -eux; \
-	addgroup --gid 99 --system haproxy; \
-	adduser \
-		--disabled-password \
-		--home /var/lib/haproxy \
-		--ingroup haproxy \
-		--no-create-home \
-		--system \
-		--uid 99 \
-		haproxy
+    addgroup --gid 99 --system haproxy; \
+    adduser \
+        --disabled-password \
+        --home /var/lib/haproxy \
+        --ingroup haproxy \
+        --no-create-home \
+        --system \
+        --uid 99 \
+        haproxy
 
-ENV HAPROXY_VERSION=${HAPROXY_VERSION}
-
-RUN set -eux; \
-	\
-	apk add --no-cache --virtual .build-deps \
-		gcc \
-		libc-dev \
-		linux-headers \
-		lua5.4-dev \
-		make \
-		openssl \
-		openssl-dev \
-		pcre2-dev \
-		readline-dev \
-		tar \
-	; \
-	\
-	wget -O haproxy.tar.gz "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz"; \
-    mkdir -p /usr/src/haproxy; \
-	tar -xzf haproxy.tar.gz -C /usr/src/haproxy --strip-components=1; \
-	rm haproxy.tar.gz; \
-	\
-	makeOpts=' \
-		TARGET=linux-musl \
-		USE_GETADDRINFO=1 \
-		USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
-		USE_OPENSSL=1 \
-		USE_PCRE2=1 USE_PCRE2_JIT=1 \
-		USE_PROMEX=1 \
-		\
-		EXTRA_OBJS=" \
-		" \
-	'; \
-	\
-	nproc="$(getconf _NPROCESSORS_ONLN)"; \
-	eval "make -C /usr/src/haproxy -j '$nproc' all $makeOpts"; \
-	eval "make -C /usr/src/haproxy install-bin $makeOpts"; \
-	\
-	mkdir -p /usr/local/etc/haproxy; \
-	cp -R /usr/src/haproxy/examples/errorfiles /usr/local/etc/haproxy/errors; \
-	rm -rf /usr/src/haproxy; \
-	\
-	runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
-			| tr ',' '\n' \
-			| sort -u \
-			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
-	)"; \
-	apk add --no-network --virtual .haproxy-rundeps $runDeps; \
-	apk del --no-network .build-deps; \
-	\
-# smoke test
-	haproxy -v
-
-RUN apk add --no-cache --update supervisor libnl3-cli net-tools iproute2 certbot openssl iptables ip6tables \
+# Install all runtime dependencies in a single layer
+# This includes HAProxy's deps (lua, pcre2) and the add-on's deps
+RUN apk add --no-cache --update \
+    supervisor \
+    libnl3-cli \
+    net-tools \
+    iproute2 \
+    certbot \
+    openssl \
+    iptables \
+    ip6tables \
+    lua5.4-libs \
+    pcre2 \
+    ca-certificates \
+    curl \
     && rm -rf /var/cache/apk/*
 
-RUN mkdir -p /var/log/supervisor
+# Create all required directories in one layer
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /usr/local/etc/haproxy/certs.d \
+    && mkdir -p /usr/local/etc/letsencrypt \
+    && mkdir -p /config
 
-COPY resources/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 
+# Copy compiled artifacts from the build stage
+COPY --from=dependencies_and_build /usr/local/sbin/haproxy /usr/local/sbin/haproxy
+COPY --from=dependencies_and_build /usr/local/etc/haproxy/errors /usr/local/etc/haproxy/errors
 
+# Copy configuration files and scripts
+COPY resources/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY haproxy/config/haproxy.cfg /config/haproxy.cfg
+COPY resources/certbot /etc/cron.d/certbot
+COPY resources/cli.ini /usr/local/etc/letsencrypt/cli.ini
+COPY resources/haproxy-refresh /usr/bin/haproxy-refresh
+COPY resources/haproxy-restart /usr/bin/haproxy-restart
+COPY resources/haproxy-check /usr/bin/haproxy-check
+COPY resources/certbot-certonly /usr/bin/certbot-certonly
+COPY resources/certbot-renew /usr/bin/certbot-renew
+COPY resources/start.sh /start.sh
 
-RUN mkdir -p /usr/local/etc/haproxy/certs.d \
-    && mkdir -p /usr/local/etc/letsencrypt
-
-COPY resources/certbot /etc/cron.d/certbot 
-COPY resources/cli.ini /usr/local/etc/letsencrypt/cli.ini 
-COPY resources/haproxy-refresh /usr/bin/haproxy-refresh 
-COPY resources/haproxy-restart /usr/bin/haproxy-restart 
-COPY resources/haproxy-check /usr/bin/haproxy-check 
-COPY resources/certbot-certonly /usr/bin/certbot-certonly 
-COPY resources/certbot-renew /usr/bin/certbot-renew 
-
+# Set permissions and install cron in one layer
 RUN chmod +x /usr/bin/haproxy-refresh /usr/bin/haproxy-restart \
-        /usr/bin/haproxy-check /usr/bin/certbot-certonly /usr/bin/certbot-renew
+        /usr/bin/haproxy-check /usr/bin/certbot-certonly /usr/bin/certbot-renew \
+        /start.sh \
+    && crontab /etc/cron.d/certbot
 
-RUN crontab /etc/cron.d/certbot
-COPY resources/start.sh /start.sh 
+# Add the requested HEALTHCHECK (assumes HAProxy stats are on port 8099)
+#HEALTHCHECK --interval=1m --timeout=3s --start-period=30s --start-interval=3s \
+#  CMD curl -f http://localhost:8099/ || exit 1
 
-RUN chmod +x /start.sh
-
+# Expose ports and set volumes
 EXPOSE 443 80
 VOLUME [/config/ /etc/letsencrypt/ /usr/local/etc/haproxy/certs.d/]
 
+# Set the entrypoint
 CMD ["/start.sh"]
-

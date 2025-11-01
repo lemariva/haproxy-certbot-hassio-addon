@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bashio
 #
-# Copyright [2021] [LeMaRiva Tech]
+# Copyright [2025] [LeMaRiva Tech]
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+#set -e
 
 bashio::log.info "Preparing to start..."
 bashio::config.require 'data_path'
@@ -41,7 +41,7 @@ export FORCE_HTTPS_REDIRECT="$(bashio::config 'force_redirect')"
 
 # Check if config file for haproxy exists
 if [ ! -e ${CONFIG} ]; then
-  echo "${CONFIG} not found"
+  bashio::log.error "${CONFIG} not found"
   exit 1
 fi
 

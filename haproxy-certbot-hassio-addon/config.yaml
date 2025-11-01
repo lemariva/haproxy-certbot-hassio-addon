@@ -6,8 +6,7 @@ init: false
 timeout: 30
 boot: auto
 ingress: true
-homeassistant_api: true
-hassio_api: true 
+hassio_api: true
 panel_icon: "mdi:network"
 arch:
   - aarch64
@@ -47,5 +46,4 @@ schema:
   watchdog: str?
   force_onboarding: bool?
   log_level: "list(DEBUG|TRACE|INFO|WARN|CRITICAL|WARNING)?"
-image: "lemariva/hassio-haproxy-certbot-addon" 
-image_latest: true  
+image: "lemariva/hassio-haproxy-certbot-addon"
