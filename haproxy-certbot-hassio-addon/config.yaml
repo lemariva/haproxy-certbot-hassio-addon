@@ -1,6 +1,6 @@
 name: "HaProxy-Certbot"
 description: "HaProxy with Certbot for automatic SSL certificate management"
-version: "1.1.5"
+version: "1.1.6"
 slug: "haproxy_certbot"
 init: false
 timeout: 30
@@ -16,7 +16,6 @@ cap_add:
 hassio_api: true
 hassio_role: manager
 homeassistant_api: true
-docker_api: true
 privileged:
   - NET_ADMIN
 map:
