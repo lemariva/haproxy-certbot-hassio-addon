@@ -38,7 +38,7 @@ ports_description:
   9999/tcp: "HaProxy statistics web interface"
 options:
   data_path: "/config/haproxy-certbot"
-  ha_ip_address: localhost
+  ha_ip_address: null
   ha_port: 8123
   cert_email: null
   cert_domains: null
@@ -50,7 +50,7 @@ schema:
   ha_ip_address: str?
   ha_port: int?
   cert_email: str?
-  cert_domains: "list(str)?"
+  cert_domains: str?
   force_redirect: bool?
   force_onboarding: bool?
   stats_user: str?          
