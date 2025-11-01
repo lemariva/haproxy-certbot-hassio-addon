@@ -33,7 +33,9 @@ CERT=${TEMP_DIR}/haproxy_cert.pem
 CSR=${TEMP_DIR}/haproxy.csr
 DEFAULT_PEM=${HA_PROXY_DIR}/default.pem
 CONFIG=/app/haproxy.cfg
-CERTBOT_CERT_PATH=/etc/letsencrypt/live/$(bashio::config 'cert_domains' | bashio::jq '.[0]' -r)
+CERT_DOMAIN_STRING="$(bashio::config 'cert_domains')"
+FIRST_DOMAIN=$(echo "${CERT_DOMAIN_STRING}" | cut -d ',' -f 1 | xargs)
+CERTBOT_CERT_PATH="/etc/letsencrypt/live/${FIRST_DOMAIN}"
 
 # --- SETUP ENV VARIABLES ---
 export HA_SERVICE_IP="$(bashio::config 'ha_ip_address')"
@@ -79,7 +81,11 @@ elif bashio::config.has_value 'cert_domains'; then
 
     # Extract required certbot options
     CERT_EMAIL=$(bashio::config 'cert_email')
-    CERT_DOMAINS=$(bashio::config 'cert_domains' | bashio::jq -r 'map("-d " + .) | .[]')
+    
+    # Transform the comma-separated string into a space-separated list of -d arguments
+    # Example: "domain1.com,domain2.com" -> "-d domain1.com -d domain2.com"
+    CERT_DOMAINS=$(echo "${CERT_DOMAIN_STRING}" | sed 's/,/ -d /g' | xargs -I {} echo "-d {}")
+
 
     # Check for required certbot values
     if bashio::var.is_empty "${CERT_EMAIL}" || bashio::var.is_empty "${CERT_DOMAINS}"; then
@@ -89,11 +95,10 @@ elif bashio::config.has_value 'cert_domains'; then
     bashio::log.info "Attempting to obtain certificate for domains: ${CERT_DOMAINS}"
 
     # Run certbot to get certificate (using the custom wrapper script)
-    # The certbot-certonly wrapper must be defined elsewhere in your build
     if ! /usr/bin/certbot-certonly -c /usr/local/etc/letsencrypt/cli.ini \
         --agree-tos \
         --email "${CERT_EMAIL}" \
-        ${CERT_DOMAINS}; then
+        ${CERT_DOMAINS}; then # <--- Pass the transformed string here
         bashio::log.error "Certbot certificate request failed. Falling back to self-signed."
     else
         bashio::log.info "Certificate successfully obtained!"
