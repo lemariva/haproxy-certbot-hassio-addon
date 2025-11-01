@@ -33,9 +33,7 @@ CERT=${TEMP_DIR}/haproxy_cert.pem
 CSR=${TEMP_DIR}/haproxy.csr
 DEFAULT_PEM=${HA_PROXY_DIR}/default.pem
 CONFIG=/app/haproxy.cfg
-CERT_DOMAIN_STRING="$(bashio::config 'cert_domains')"
-FIRST_DOMAIN=$(echo "${CERT_DOMAIN_STRING}" | cut -d ',' -f 1 | xargs)
-CERTBOT_CERT_PATH="/etc/letsencrypt/live/${FIRST_DOMAIN}"
+
 
 # --- SETUP ENV VARIABLES ---
 export HA_SERVICE_IP="$(bashio::config 'ha_ip_address')"
@@ -44,6 +42,9 @@ export FORCE_HTTPS_REDIRECT="$(bashio::config 'force_redirect')"
 export HAPROXY_DATA="$(bashio::config 'data_path')"
 export HAPROXY_STATS_USER="$(bashio::config 'stats_user')"
 export HAPROXY_STATS_PASS="$(bashio::config 'stats_password')"
+CERT_EMAIL="$(bashio::config 'cert_email')"
+CERT_DOMAIN="$(bashio::config 'cert_domain')"
+CERTBOT_CERT_PATH="/etc/letsencrypt/live/${CERT_DOMAIN}"
 
 # Export internal ports (must match 'ports' in config.yaml)
 export HTTP_PORT="80"
@@ -57,7 +58,6 @@ export HOST_PORT_9999=$(bashio::addon.port 9999)
 bashio::log.info "Host port for HTTP (internal 80) is: ${HOST_PORT_80}"
 bashio::log.info "Host port for HTTPS (internal 443) is: ${HOST_PORT_443}"
 bashio::log.info "Host port for HAProxy Stats (internal 9999) is: ${HOST_PORT_9999}"
-
 bashio::log.info "HAProxy stats user set to: ${HAPROXY_STATS_USER}"
 
 # --- HAProxy CONFIG SETUP ---
@@ -77,28 +77,19 @@ fi
 if bashio::config.has_value 'cert_domains' && [ -d "${CERTBOT_CERT_PATH}" ]; then
     bashio::log.info "Let's Encrypt certificate directory found: ${CERTBOT_CERT_PATH}"
 elif bashio::config.has_value 'cert_domains'; then
-    bashio::log.warning "No existing Let's Encrypt certificate found. Requesting new one..."
-
-    # Extract required certbot options
-    CERT_EMAIL=$(bashio::config 'cert_email')
-    
-    # Transform the comma-separated string into a space-separated list of -d arguments
-    # Example: "domain1.com,domain2.com" -> "-d domain1.com -d domain2.com"
-    CERT_DOMAINS=$(echo "${CERT_DOMAIN_STRING}" | sed 's/,/ -d /g' | xargs -I {} echo "-d {}")
-
+    bashio::log.warning "No existing Let's Encrypt certificate found. Requesting new one..."  
 
     # Check for required certbot values
-    if bashio::var.is_empty "${CERT_EMAIL}" || bashio::var.is_empty "${CERT_DOMAINS}"; then
+    if bashio::var.is_empty "${CERT_EMAIL}" || bashio::var.is_empty "${CERT_DOMAIN}"; then
         bashio::exit.nok "Certbot is enabled but 'cert_email' or 'cert_domains' is missing."
     fi
 
-    bashio::log.info "Attempting to obtain certificate for domains: ${CERT_DOMAINS}"
+    bashio::log.info "Attempting to obtain certificate for domain: ${CERT_DOMAIN}"
 
     # Run certbot to get certificate (using the custom wrapper script)
-    if ! /usr/bin/certbot-certonly -c /usr/local/etc/letsencrypt/cli.ini \
-        --agree-tos \
+    if ! /usr/bin/certbot-certonly \
         --email "${CERT_EMAIL}" \
-        ${CERT_DOMAINS}; then # <--- Pass the transformed string here
+        --domains "${CERT_DOMAIN}"; then
         bashio::log.error "Certbot certificate request failed. Falling back to self-signed."
     else
         bashio::log.info "Certificate successfully obtained!"

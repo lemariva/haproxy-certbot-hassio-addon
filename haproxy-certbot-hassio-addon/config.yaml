@@ -1,6 +1,6 @@
 name: "HaProxy-Certbot"
 description: "HaProxy with Certbot for automatic SSL certificate management"
-version: "1.1.6"
+version: "1.1.7"
 slug: "haproxy_certbot"
 init: false
 timeout: 30
@@ -40,7 +40,7 @@ options:
   ha_ip_address: null
   ha_port: 8123
   cert_email: null
-  cert_domains: null
+  cert_domain: null
   force_redirect: true
   stats_user: "admin"          
   stats_password: "changeme"  
@@ -49,7 +49,7 @@ schema:
   ha_ip_address: str?
   ha_port: int?
   cert_email: str?
-  cert_domains: str?
+  cert_domain: str?
   force_redirect: bool?
   force_onboarding: bool?
   stats_user: str?          
