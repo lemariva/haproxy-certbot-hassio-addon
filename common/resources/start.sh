@@ -19,8 +19,7 @@ set -e
 bashio::log.info "Preparing to start..."
 bashio::config.require 'data_path'
 
-DATA_PATH=$(bashio::config 'data_path')
-
+export DATA_PATH="$(bashio::config 'data_path')"
 HA_PROXY_DIR=/usr/local/etc/haproxy
 TEMP_DIR=/tmp
 
@@ -33,11 +32,12 @@ CSR=${TEMP_DIR}/haproxy.csr
 DEFAULT_PEM=${HA_PROXY_DIR}/default.pem
 CONFIG=/config/haproxy.cfg
 
-HTTP_PORT=$(bashio::config 'http_port')
-HTTPS_PORT=$(bashio::config 'https_port')
-FORCE_HTTPS_REDIRECT=$(bashio::config 'force_redirect')
-SERVICE_IP=$(bashio::config 'ha_ip_address')
-SERVICE_PORT=$(bashio::config 'ha_port')
+# setup env variables
+export SERVICE_IP="$(bashio::config 'ha_ip_address')"
+export SERVICE_PORT="$(bashio::config 'ha_port')"
+export HTTP_PORT="$(bashio::config 'http_port')"
+export HTTPS_PORT="$(bashio::config 'https_port')"
+export FORCE_HTTPS_REDIRECT="$(bashio::config 'force_redirect')"
 
 # Check if config file for haproxy exists
 if [ ! -e ${CONFIG} ]; then

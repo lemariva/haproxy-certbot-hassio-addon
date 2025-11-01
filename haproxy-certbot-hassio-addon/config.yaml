@@ -1,0 +1,51 @@
+name: "HaProxy-Certbot"
+description: "HaProxy with Certbot for automatic SSL certificate management"
+version: "1.1.0"
+slug: "haproxy_certbot"
+init: false
+timeout: 30
+boot: auto
+ingress: true
+homeassistant_api: true
+hassio_api: true 
+panel_icon: "mdi:network"
+arch:
+  - aarch64
+url: "https://github.com/lemariva/haproxy-certbot-hassio-addon"
+startup: services
+cap_add:
+  - NET_ADMIN
+map:
+  - type: "share"
+    read_only: false
+  - type: "homeassistant_config"
+    read_only: false
+    path: "/config"
+  - type: "addon_config"
+    read_only: false
+    path: "/addon_config"
+ports:
+  80/tcp: 80
+  443/tcp: 443
+ports_description:
+  80/tcp: "Cerbot tcp-listen port to obtain SSL certificates"
+  443/tcp: "Frontend tcp-listen port to access home assistant"
+options:
+  data_path: "/config/haproxy-certbot"
+  http_port: 80
+  https_port: 443
+  ha_ip_address: null
+  ha_port: 8123
+  force_redirect: true
+schema:
+  data_path: str
+  ha_ip_address: str?
+  ha_port: int?
+  http_port: int?
+  https_port: int?
+  force_redirect: bool?
+  watchdog: str?
+  force_onboarding: bool?
+  log_level: "list(DEBUG|TRACE|INFO|WARN|CRITICAL|WARNING)?"
+image: "lemariva/hassio-haproxy-certbot-addon" 
+image_latest: true  

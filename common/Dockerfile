@@ -1,15 +1,21 @@
-FROM alpine:3.20
+FROM alpine:3.22
 
-ARG HAPROXY_MAJOR=3.0
-ARG HAPROXY_VERSION=3.0.7
+ARG HAPROXY_MAJOR=3.2
+ARG HAPROXY_VERSION=3.2.7
+ARG VCS_REF=`git rev-parse --short HEAD`
+ARG MAJOR_REVISION=1
+ARG MINOR_REVISION=1
+ARG PATCH_REVISION=0
+ARG BUILD_DATE=`$(date -u +"%Y-%m-%dT%H:%M:%SZ")`
+
 
 #metadata labels
 LABEL org.label-schema.build-date="${BUILD_DATE}" \
-      org.label-schema.vcs-url="https://github.com/lemariva/haproxy-certbot" \
+      org.label-schema.vcs-url="https://github.com/lemariva/hassio-haproxy-certbot.git" \
 	  org.label-schema.name="HAProxy Certbot" \
       org.label-schema.description="haproxy proxy with letsencrypt certbot for https" \
       org.label-schema.vcs-ref="${VCS_REF}" \
-      org.label-schema.version="${MAYOR_REVISION}.${MINOR_REVISION}.${BUILD_ID}" \
+      org.label-schema.version="${MAJOR_REVISION}.${MINOR_REVISION}.${PATCH_REVISION}" \
       org.label-schema.vendor="LeMaRiva|Tech"
 
 RUN set -eux; \
@@ -23,8 +29,7 @@ RUN set -eux; \
 		--uid 99 \
 		haproxy
 
-ENV HAPROXY_VERSION ${HAPROXY_VERSION}
-ENV HAPROXY_URL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz"
+ENV HAPROXY_VERSION=${HAPROXY_VERSION}
 
 RUN set -eux; \
 	\
@@ -41,7 +46,7 @@ RUN set -eux; \
 		tar \
 	; \
 	\
-	wget -O haproxy.tar.gz "$HAPROXY_URL"; \
+	wget -O haproxy.tar.gz "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz"; \
     mkdir -p /usr/src/haproxy; \
 	tar -xzf haproxy.tar.gz -C /usr/src/haproxy --strip-components=1; \
 	rm haproxy.tar.gz; \
@@ -110,3 +115,4 @@ EXPOSE 443 80
 VOLUME [/config/ /etc/letsencrypt/ /usr/local/etc/haproxy/certs.d/]
 
 CMD ["/start.sh"]
+
