@@ -1,6 +1,6 @@
 name: "HaProxy-Certbot"
 description: "HaProxy with Certbot for automatic SSL certificate management"
-version: "1.1.0"
+version: "1.1.1"
 slug: "haproxy_certbot"
 init: false
 timeout: 30
