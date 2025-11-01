@@ -37,12 +37,14 @@ DEFAULT_PEM=${HA_PROXY_DIR}/default.pem
 CONFIG=/app/haproxy.cfg
 
 # setup env variables
-export SERVICE_IP="$(bashio::config 'ha_ip_address')"
-export SERVICE_PORT="$(bashio::config 'ha_port')"
-export HTTP_PORT="$(bashio::config 'http_port')"
-export HTTPS_PORT="$(bashio::config 'https_port')"
+export HA_SERVICE_IP="$(bashio::config 'ha_ip_address')"
+export HA_SERVICE_PORT="$(bashio::config 'ha_port')"
 export FORCE_HTTPS_REDIRECT="$(bashio::config 'force_redirect')"
 export HAPROXY_DATA="$(bashio::config 'data_path')"
+export HAPROXY_STATS_USER="$(bashio::config 'stats_user')"
+export HAPROXY_STATS_PASS="$(bashio::config 'stats_password')"
+
+bashio::log.info "HAProxy stats user set to: ${HAPROXY_STATS_USER}"
 
 mkdir -p "$HAPROXY_DATA" || bashio::exit.nok "Could not create $HAPROXY_DATA"
 

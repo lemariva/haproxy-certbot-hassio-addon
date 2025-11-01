@@ -127,11 +127,11 @@ RUN chmod +x /usr/bin/haproxy-refresh /usr/bin/haproxy-restart \
     && crontab /etc/cron.d/certbot
 
 # Add the requested HEALTHCHECK (assumes HAProxy stats are on port 8099)
-#HEALTHCHECK --interval=1m --timeout=3s --start-period=30s --start-interval=3s \
-#  CMD curl -f http://localhost:8099/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:9999/stats || exit 1
 
 # Expose ports and set volumes
-EXPOSE 443 80
+EXPOSE 443 80 9999
 VOLUME [/etc/letsencrypt/ /usr/local/etc/haproxy/certs.d/]
 
 # Set the entrypoint
