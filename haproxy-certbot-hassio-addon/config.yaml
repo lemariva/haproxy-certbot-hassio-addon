@@ -6,7 +6,6 @@ init: false
 timeout: 30
 boot: auto
 ingress: true
-hassio_api: true
 panel_icon: "mdi:network"
 arch:
   - aarch64
@@ -14,7 +13,13 @@ url: "https://github.com/lemariva/haproxy-certbot-hassio-addon"
 startup: application
 cap_add:
   - NET_ADMIN
+hassio_api: true
+hassio_role: manager
+homeassistant_api: true
 host_network: true
+docker_api: true
+privileged:
+  - NET_ADMIN
 map:
   - type: "share"
     read_only: false
