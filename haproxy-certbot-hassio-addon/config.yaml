@@ -11,7 +11,7 @@ panel_icon: "mdi:network"
 arch:
   - aarch64
 url: "https://github.com/lemariva/haproxy-certbot-hassio-addon"
-startup: services
+startup: application
 cap_add:
   - NET_ADMIN
 map:
