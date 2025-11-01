@@ -1,0 +1,5 @@
+{
+  "name": "HAProxy and Let's Encrypt",
+  "url": "https://github.com/lemariva/haproxy-certbot-hassio-addon",
+  "maintainer": "Mauro Riva <info@lemariva.com>"
+}
