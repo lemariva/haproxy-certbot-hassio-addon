@@ -1,6 +1,6 @@
 name: "HaProxy-Certbot"
 description: "HaProxy with Certbot for automatic SSL certificate management"
-version: "1.1.3"
+version: "1.1.4"
 slug: "haproxy_certbot"
 init: false
 timeout: 30
@@ -31,12 +31,14 @@ map:
 ports:
   80/tcp: 80
   443/tcp: 443
+  9999/tcp: 9999
 ports_description:
-  80/tcp: "Cerbot tcp-listen port to obtain SSL certificates"
+  80/tcp: "Frontend http-listen port to access home assistant for certificate generation and renewal"
   443/tcp: "Frontend tcp-listen port to access home assistant"
+  9999/tcp: "HaProxy statistics web interface"
 options:
   data_path: "/config/haproxy-certbot"
-  ha_ip_address: null
+  ha_ip_address: localhost
   ha_port: 8123
   force_redirect: true
   stats_user: "admin"          

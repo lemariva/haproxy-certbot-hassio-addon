@@ -18,8 +18,8 @@ set -e
 
 bashio::log.info "Preparing to start..."
 
-bashio::log.info "Waiting 5 seconds for Supervisor to initialize API token..."
-sleep 5
+bashio::log.info "Waiting 1 seconds for Supervisor to initialize API token..."
+sleep 1
 
 bashio::config.require 'data_path'
 
@@ -43,6 +43,13 @@ export FORCE_HTTPS_REDIRECT="$(bashio::config 'force_redirect')"
 export HAPROXY_DATA="$(bashio::config 'data_path')"
 export HAPROXY_STATS_USER="$(bashio::config 'stats_user')"
 export HAPROXY_STATS_PASS="$(bashio::config 'stats_password')"
+export HOST_PORT_80=$(bashio::addon.port 80)
+export HOST_PORT_443=$(bashio::addon.port 443)
+export HOST_PORT_9999=$(bashio::addon.port 9999)
+
+bashio::log.info "Host port for HTTP (internal 80) is: ${HOST_PORT_80}"
+bashio::log.info "Host port for HTTPS (internal 443) is: ${HOST_PORT_443}"
+bashio::log.info "Host port for HAProxy Stats (internal 9999) is: ${HOST_PORT_9999}"
 
 bashio::log.info "HAProxy stats user set to: ${HAPROXY_STATS_USER}"
 
