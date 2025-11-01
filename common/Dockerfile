@@ -110,7 +110,7 @@ COPY --from=dependencies_and_build /usr/local/etc/haproxy/errors /usr/local/etc/
 
 # Copy configuration files and scripts
 COPY resources/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY haproxy/config/haproxy.cfg /config/haproxy.cfg
+COPY haproxy/config/haproxy.cfg /app/haproxy.cfg
 COPY resources/certbot /etc/cron.d/certbot
 COPY resources/cli.ini /usr/local/etc/letsencrypt/cli.ini
 COPY resources/haproxy-refresh /usr/bin/haproxy-refresh
@@ -132,7 +132,7 @@ RUN chmod +x /usr/bin/haproxy-refresh /usr/bin/haproxy-restart \
 
 # Expose ports and set volumes
 EXPOSE 443 80
-VOLUME [/config/ /etc/letsencrypt/ /usr/local/etc/haproxy/certs.d/]
+VOLUME [/etc/letsencrypt/ /usr/local/etc/haproxy/certs.d/]
 
 # Set the entrypoint
 CMD ["/start.sh"]

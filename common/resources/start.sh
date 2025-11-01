@@ -1,4 +1,4 @@
-#!/usr/bin/env bashio
+#!/usr/bin/with-contenv bashio
 #
 # Copyright [2025] [LeMaRiva Tech]
 
@@ -14,12 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#set -e
+set -e
 
 bashio::log.info "Preparing to start..."
+
+bashio::log.info "Waiting 5 seconds for Supervisor to initialize API token..."
+sleep 5
+
 bashio::config.require 'data_path'
 
-export DATA_PATH="$(bashio::config 'data_path')"
+DATA_PATH="$(bashio::config 'data_path')"
 HA_PROXY_DIR=/usr/local/etc/haproxy
 TEMP_DIR=/tmp
 
@@ -30,7 +34,7 @@ KEY=${TEMP_DIR}/haproxy_key.pem
 CERT=${TEMP_DIR}/haproxy_cert.pem
 CSR=${TEMP_DIR}/haproxy.csr
 DEFAULT_PEM=${HA_PROXY_DIR}/default.pem
-CONFIG=/config/haproxy.cfg
+CONFIG=/app/haproxy.cfg
 
 # setup env variables
 export SERVICE_IP="$(bashio::config 'ha_ip_address')"
@@ -38,11 +42,18 @@ export SERVICE_PORT="$(bashio::config 'ha_port')"
 export HTTP_PORT="$(bashio::config 'http_port')"
 export HTTPS_PORT="$(bashio::config 'https_port')"
 export FORCE_HTTPS_REDIRECT="$(bashio::config 'force_redirect')"
+export HAPROXY_DATA="$(bashio::config 'data_path')"
+
+mkdir -p "$HAPROXY_DATA" || bashio::exit.nok "Could not create $HAPROXY_DATA"
 
 # Check if config file for haproxy exists
 if [ ! -e ${CONFIG} ]; then
-  bashio::log.error "${CONFIG} not found"
-  exit 1
+  bashio::exit.nok "${CONFIG} not found"
+else
+  if [ ! -e ${HAPROXY_DATA}/haproxy.cfg ]; then
+    cp ${CONFIG} ${HAPROXY_DATA}/haproxy.cfg
+  fi;
+  bashio::log.info "Using configuration file at ${HAPROXY_DATA}/haproxy.cfg"
 fi
 
 # Check if default.pem has been created
@@ -58,7 +69,7 @@ fi
 
 # Mark Syn Packets
 IP=$(ip addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1)
-/sbin/iptables -t mangle -I OUTPUT -p tcp -s ${IP} --syn -j MARK --set-mark 1
+/usr/sbin/iptables -t mangle -I OUTPUT -p tcp -s ${IP} --syn -j MARK --set-mark 1
 
 # Set up the queuing discipline
 tc qdisc add dev lo root handle 1: prio bands 4

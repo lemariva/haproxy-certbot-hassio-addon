@@ -14,6 +14,7 @@ url: "https://github.com/lemariva/haproxy-certbot-hassio-addon"
 startup: application
 cap_add:
   - NET_ADMIN
+host_network: true
 map:
   - type: "share"
     read_only: false
