@@ -67,8 +67,15 @@ if [ ! -e ${DEFAULT_PEM} ]; then
   echo ${PASSWORD} > /password.txt
 fi
 
-# Mark Syn Packets
-IP=$(ip addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1)
+# Get the IP address of the default route's interface
+INTERFACE_NAME=$(ip route | awk '/default/ {print $5}' | head -n 1)
+IP=$(ip addr show $INTERFACE_NAME | awk '/inet / {print $2}' | cut -d/ -f1)
+
+# Fallback: Use 'ip' to find the first non-localhost IP
+if [ -z "$IP" ]; then
+    IP=$(ip route get 1.1.1.1 | awk '/src/ {print $7}' | head -n 1)
+fi
+
 /usr/sbin/iptables -t mangle -I OUTPUT -p tcp -s ${IP} --syn -j MARK --set-mark 1
 
 # Set up the queuing discipline
