@@ -17,6 +17,7 @@ steps:
   - '--name'
   - 'mybuilder'
   - '--use'
+# 3. Build and push the multi-architecture Docker image
 - name: 'gcr.io/cloud-builders/docker'
   id: 'build-and-push'
   args: 
@@ -43,7 +44,7 @@ steps:
    - .
    - --push
 substitutions:  # default values
-  _SEMVER_REVISION: "1.1.0"
+  _SEMVER_REVISION: "1.1.8"
   _ARCHITECTURE: "aarch64"
   _HAPROXY_MAJOR: "3.2"
   _HAPROXY_VERSION: "3.2.7"

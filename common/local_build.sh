@@ -18,8 +18,8 @@
 # This script is not intended for production use.
 
 docker buildx build --platform linux/aarch64 \
-    -t lemariva/hassio-haproxy-certbot-addon:1.1.7 \
-    --build-arg SEMVER_REVISION=1.1.7 \
+    -t lemariva/hassio-haproxy-certbot-addon:1.1.8 \
+    --build-arg SEMVER_REVISION=1.1.8 \
     --build-arg ARCHITECTURE=aarch64 \
     --build-arg BUILD_DATE=0 \
     --build-arg VCS_REF=0 \

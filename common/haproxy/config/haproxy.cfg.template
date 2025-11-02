@@ -5,7 +5,7 @@ global
   maxpipes 99999
   tune.maxaccept 500
 
-  log 127.0.0.1 local0
+  log 127.0.0.1 local0 __LOG_LEVEL__
   log 127.0.0.1 local1 notice
 
   ca-base /etc/ssl/certs
@@ -29,14 +29,14 @@ resolvers docker_resolver
   nameserver dns 127.0.0.11:53
 
 listen stats
-  bind *:9999
+  bind *:__HOST_PORT_9999__
   stats enable
   stats hide-version
   stats uri /stats
-  stats auth ${HAPROXY_STATS_USER}:${HAPROXY_STATS_PASS}
+  stats auth __HAPROXY_STATS_USER__:__HAPROXY_STATS_PASS__
 
 frontend http_in
-  bind *:${HOST_PORT_80} alpn h2,http/1.1
+  bind *:__HOST_PORT_80__ alpn h2,http/1.1
   option forwardfor
   http-request add-header "X-Forwarded-Proto" "http"
   acl letsencrypt_http_acl path_beg /.well-known/acme-challenge/
@@ -45,8 +45,7 @@ frontend http_in
   default_backend hass-backend
 
 frontend https_in
-  log stdout  format raw  local0  info
-  bind *:${HOST_PORT_443} ssl crt /usr/local/etc/haproxy/default.pem crt /usr/local/etc/haproxy/certs.d ciphers ECDHE-RSA-AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM alpn h2,http/1.1
+  bind *:__HOST_PORT_443__ ssl crt /usr/local/etc/haproxy/default.pem crt /usr/local/etc/haproxy/certs.d ciphers ECDHE-RSA-AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM alpn h2,http/1.1
   option forwardfor
   http-request add-header "X-Forwarded-Proto" "https"
   default_backend hass-backend
@@ -58,5 +57,5 @@ backend hass-backend
   balance leastconn
   option tcp-check
   option log-health-checks
-  server haInt ${HA_SERVICE_IP}:${HA_SERVICE_PORT} check inter 5s fall 3 rise 2 resolvers docker_resolver resolve-prefer ipv4
+  server haInt __HA_SERVICE_IP__:__HA_SERVICE_PORT__ check inter 5s fall 3 rise 2 resolvers docker_resolver resolve-prefer ipv4
   http-request set-header X-Forwarded-Port %[dst_port]

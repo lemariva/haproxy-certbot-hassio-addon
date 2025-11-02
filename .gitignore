@@ -1,3 +1,2 @@
 *.pem
-orchestration/haproxy/certs.d/*
-orchestration/haproxy/letsencrypt/*
+.DS_Store

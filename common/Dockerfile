@@ -110,7 +110,7 @@ COPY --from=dependencies_and_build /usr/local/etc/haproxy/errors /usr/local/etc/
 
 # Copy configuration files and scripts
 COPY resources/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY haproxy/config/haproxy.cfg /app/haproxy.cfg
+COPY haproxy/config/haproxy.cfg.template /app/haproxy.cfg.template
 COPY resources/certbot /etc/cron.d/certbot
 COPY resources/cli.ini /usr/local/etc/letsencrypt/cli.ini
 COPY resources/haproxy-refresh /usr/bin/haproxy-refresh
